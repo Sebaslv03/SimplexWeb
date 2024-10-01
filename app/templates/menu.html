@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simplex</title>
+    <style>
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <h1>Simplex</h1>
+        <form method="post" action="">
+            {% csrf_token %}
+            <label for="variables">Variables:</label>
+            <input type="number" id="variables" name="variables" required><br><br>
+            <label for="restricciones">Restricciones:</label>
+            <input type="number" id="restricciones" name="restricciones" required><br><br>
+            <label for="method">Método:</label>
+            <select id="method" name="method" required>
+                <option value="gran_m">Gran M</option>
+                <option value="dos_fases">Dos Fases</option>
+            </select><br><br>
+            <button type="submit">Continuar</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simplex</title>
+    <style>
+        .center {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <h1>Simplex</h1>
+        <form method="post" action="{% url 'simplex' %}">
+            {% csrf_token %}
+            <input type="hidden" name="variables" value="{{ variables }}">
+            <input type="hidden" name="restricciones" value="{{ restricciones }}">
+            <input type="hidden" name="method" value="{{ method }}">
+            <div class="form-group">
+                <label for="objective">Objetivo de la función:</label>
+                <select id="objective" name="objective" required>
+                    <option value="maximizar">Maximizar</option>
+                    <option value="minimizar">Minimizar</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Función:</label>
+                {% for i in range_variables %}
+                    <input type="number" name="x{{ i }}" required> x{{ i }}{% if not forloop.last %} + {% endif %}
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Restricciones:</label>
+                {% for j in range_restricciones %}
+                    <div>
+                        {% for k in range_variables %}
+                            <input type="number" name="r{{ j }}x{{ k }}" required> x{{ k }}{% if not forloop.last %} + {% endif %}
+                        {% endfor %}
+                        <select name="r{{ j }}_operator" required>
+                            <option value="<=">&le;</option>
+                            <option value=">=">&ge;</option>
+                            <option value="=">=</option>
+                        </select>
+                        <input type="number" name="r{{ j }}_value" required>
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit">Continuar</button>
+        </form>
+    </div>
+</body>
+</html>
