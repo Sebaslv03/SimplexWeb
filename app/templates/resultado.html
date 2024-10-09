@@ -18,32 +18,55 @@
             padding: 10px;
             text-align: center;
         }
+        h2, h1 {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <div class="center">
-        <h1>Resultado del Algoritmo Simplex</h1>
+    <div id="tables-container">
+        <h1>Resultado Algoritmo Simplex</h1>
         {% for iteracion in iteraciones %}
             <h2>Iteración {{ forloop.counter }}</h2>
-            <table>
+            <table border="1">
                 <thead>
                     <tr>
-                        {% for col in iteracion.0 %}
-                            <th>Col {{ forloop.counter }}</th>
+                        {% for col in cols %}
+                            <th>{{ col }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for row in iteracion %}
+                    {% for row, dataRow in iteracion %}
                         <tr>
-                            {% for cell in row %}
-                                <td>{{ cell }}</td>
+                            <td>{{ row }}</td>
+                            {% for value in dataRow %}
+                                <td>{{ value }}</td>
                             {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% endfor %}
+    </div>
+    <div id="tables-container">
+        <h2>Valores Finales</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row, last_value in result %}
+                    <tr>
+                        <td>{{ row }}</td>
+                        <td>{{ last_value }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </body>
 </html>

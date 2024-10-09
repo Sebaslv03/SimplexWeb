@@ -55,8 +55,24 @@ def simplex(request):
         # Aquí puedes llamar a tu algoritmo de Simplex con los valores capturados
         simplex = SimplexAlgorithm(method, methodSimplex, variables, restricciones, variables_count, restricciones_count)
         iteraciones = simplex.createMatrix()
-        print(iteraciones)
-        
-        return render(request, 'resultado.html', {'iteraciones': iteraciones})
+        cols = simplex.cols
+        rows = simplex.rows
+        print("Cols:" + str(cols))
+        print("Rows: "+ str(rows))
+        iteraciones_combinadas = []
+        for i, iteracion in enumerate(iteraciones):
+            iteraciones_combinadas.append(list(zip(rows[i], iteracion)))
+
+        print("Iteraciones Combinadas" + str(iteraciones_combinadas))
+
+        auxResult = iteraciones_combinadas[-1]
+        result = [(row, data_row[-1]) for row, data_row in auxResult]
+        print("Resultado: " + str(result))
+
+
+
+
+
+        return render(request, 'resultado.html', {'iteraciones': iteraciones_combinadas, 'cols': cols, 'result': result}) 
     return HttpResponse("Método no permitido", status=405)
 
