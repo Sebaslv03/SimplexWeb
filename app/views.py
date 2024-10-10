@@ -46,7 +46,19 @@ def simplex(request):
             aux.append(operator)
             aux.append(value)
             restricciones.append(aux)
-        simplex = SimplexAlgorithm(method, methodSimplex, variables, restricciones, variables_count, restricciones_count)
+        limites = []
+        for i in range(int(variables_count)):
+            limit_type = request.POST.get(f'x{i}_limit', 'sin_limite')
+            limit_value = None
+            if limit_type == 'con_limite':
+                limit_value = request.POST.get(f'x{i}_limit_value')
+                if limit_value:
+                    limit_value = float(limit_value)
+            limites.append({
+                'type': limit_type,
+                'value': limit_value
+            })  
+        simplex = SimplexAlgorithm(method, methodSimplex, variables, restricciones, variables_count, restricciones_count, limites)
         iteraciones = simplex.createMatrix()
         cols = simplex.cols
         rows = simplex.rows
@@ -62,4 +74,7 @@ def simplex(request):
             'total_iteraciones': len(iteraciones_combinadas)
         })
     return HttpResponse("Método no permitido", status=405)
+
+
+
 

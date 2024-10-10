@@ -10,7 +10,32 @@
         .form-group {
             margin-bottom: 15px;
         }
+        .limit-value {
+            display: inline; /* Mostrar el campo de límite por defecto */
+        }
     </style>
+    <script>
+        function toggleLimitInput(selectElement, inputId) {
+            var inputElement = document.getElementById(inputId);
+            if (selectElement.value === "con_limite") {
+                inputElement.style.display = 'inline';
+                inputElement.required = true;
+            } else {
+                inputElement.style.display = 'none';
+                inputElement.required = false;
+                inputElement.value = ''; // Limpiar el valor del input si no es requerido
+            }
+        }
+        
+        // Mostrar u ocultar los campos de límite cuando se cargue la página, si es necesario
+        document.addEventListener("DOMContentLoaded", function() {
+            var selects = document.querySelectorAll('select[id^="x"]');
+            selects.forEach(select => {
+                var inputId = select.getAttribute('id').replace('_limit', '_value');
+                toggleLimitInput(select, inputId);
+            });
+        });
+    </script>
 </head>
 <body>
     <header>
@@ -49,6 +74,19 @@
                             <option value="=">=</option>
                         </select>
                         <input type="number" name="r{{ j }}_value" required>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                <label>Límites de las variables:</label>
+                {% for i in range_variables %}
+                    <div>
+                        <label for="x{{ i }}_limit">x{{ i|add:1 }}:</label>
+                        <select name="x{{ i }}_limit" id="x{{ i }}_limit" onchange="toggleLimitInput(this, 'x{{ i }}_value')">
+                            <option value="con_limite" selected>&ge;</option>
+                            <option value="sin_limite">Sin límite</option>
+                        </select>
+                        <input type="number" name="x{{ i }}_limit_value" id="x{{ i }}_value" class="limit-value" placeholder="Valor del límite inferior" max="0" required>
                     </div>
                 {% endfor %}
             </div>

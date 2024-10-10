@@ -31,7 +31,7 @@ class MatrixOperations:
     
 class SimplexAlgorithm:
 
-    def __init__(self, method, methodSimplex, variables, restricciones, nVariables, nRestricciones):
+    def __init__(self, method, methodSimplex, variables, restricciones, nVariables, nRestricciones, limites):
         self.method = method
         self.methodSimplex = methodSimplex
         self.variables = variables
@@ -44,6 +44,7 @@ class SimplexAlgorithm:
         self.iteraciones = []
         self.rows = []
         self.cols = []
+        self.limits = limites
 
     def invertir_signos_y_comparacion(self, lista):
             # Identificar el último número y la comparación
@@ -74,17 +75,29 @@ class SimplexAlgorithm:
         # Cuenta de columnas
         cols = int(self.nVariables)+1 #cambiar por variable "variables"
         self.cols.append("BVS")
-        for i in range(0,cols - 1):
-            self.cols.append("X"+str(i+1))
+        auxLimits = []
+        indexLimits = 0
+        self.nVariables = int(self.nVariables)
+        for value in self.limits: 
+            if value['type'] == 'sin_limite':
+                auxLimits.append(1)
+                self.cols.append("X"+str(indexLimits+1)+"p")
+                self.cols.append("X"+str(indexLimits+1)+"pp")
+                self.nVariables += 1
+                cols += 1
+            else:
+                auxLimits.append(0)
+                self.cols.append("X"+str(indexLimits+1))
+            indexLimits += 1
         art = 0
         flagArt = False
         slack = 0
         for restriccion in self.restricciones: #cambiar por variable "restricciones"
             restriccion = self.invertir_signos_y_comparacion(restriccion)
-            if restriccion[int(self.nVariables)] == "<=":
+            if restriccion[len(restriccion)- 2] == "<=":
                 cols += 1
                 slack += 1
-            elif restriccion[int(self.nVariables)] == "=":
+            elif restriccion[len(restriccion)- 2] == "=":
                 cols += 1
                 flagArt = True
                 art += 1
@@ -93,10 +106,11 @@ class SimplexAlgorithm:
                 cols += 2
                 slack += 1
                 flagArt = True
-        rows = int(self.nRestricciones)+1 #cambiar por variable "restricciones"
+        rows = int(self.nRestricciones)+1
         aux = art
         self.artificial = art #crear variable artificial
         self.slack = slack #crear variable slack
+        
         # Creación de fila w en caso de que exista
         if flagArt:
             rows += 1
@@ -108,19 +122,31 @@ class SimplexAlgorithm:
                     aux -= 1
                     row.append(1)
             self.matrix.append(row) #cambiar por variable "matrix"
+        
         #Creación de la matriz principal
         row = []
         auxFuncion = -1
+        
         # En caso de minimizar
         if self.method == "Minimizar": #cambiar por variable "metodo"
             auxFuncion *= -1
+        
         # Creación de la fila de la función objetivo
+        index = 0
+        for i in range(len(auxLimits)):
+            if auxLimits[i] == 1:
+                value = self.variables[index]
+                if(index + 1 >= len(self.variables)):
+                    self.variables.append(value*-1)
+                else:
+                    self.variables.insert(index+1, value*-1)
+                index += 1
+            index += 1
         for i in range(0, cols):
             if(i < len(self.variables)):
                 row.append(int(self.variables[i]) * auxFuncion)
             else:
                 row.append(0)
-
         self.matrix.append(row)
         
         #Creación de las filas de restricciones
@@ -129,23 +155,28 @@ class SimplexAlgorithm:
         totalArt = art
         totalSlack = slack
 
+        count = 0
+        for i in range(0, len(auxLimits)):
+            if auxLimits[i] == 1:
+                count += 1
+
         for i in range(slack):
-            self.cols.append("S" + str(i + 1 + int(self.nVariables)))
+            self.cols.append("S" + str(i + 1 + int(self.nVariables) - count))
         for i in range(art):
-            self.cols.append("A" + str(i + 1 + int(self.nVariables) + slack))
+            self.cols.append("A" + str(i + 1 + int(self.nVariables) - count + slack))
 
         self.cols.append("RHS")
 
-
+        index = 0
         for r in self.restricciones:
             row = []
             # Escribimos las variables normales
-            for c in range(0, int(self.nVariables)):
+            for c in range(len(r) - 2):
                 row.append(int(r[c]))
-            
-                
+                if auxLimits[c] == 1:
+                    row.append(-1 * int(r[c]))  
             # Escribimos las variables de holgura o artificial
-            if r[int(self.nVariables)] == "<=":
+            if r[len(r)-2] == "<=":
                 for i in range(0, auxSlack):
                     row.append(0)
                 row.append(1)
@@ -155,7 +186,7 @@ class SimplexAlgorithm:
                 auxSlack += 1
                 for i in range(0, totalArt):
                     row.append(0)
-            elif r[int(self.nVariables)] == ">=":
+            elif r[len(r)-2] == ">=":
                 for i in range(0, auxSlack):
                     row.append(0)
                 row.append(-1)
@@ -180,10 +211,10 @@ class SimplexAlgorithm:
                     row.append(0)
                 art -= 1
                 auxArt += 1
-
-            row.append(int(r[int(self.nVariables) + 1]))
+            row.append(int(r[len(r)-1]))
             self.matrix.append(row)
         auxList = []
+        #print(self.matrix)
         if totalArt > 0:
             auxList.append("-W")
         if self.method == "Minimizar":
@@ -250,9 +281,9 @@ class SimplexAlgorithm:
            
             print(m.matrix)
             # Dibujar solucion
+            # self.iteraciones.append(self.matrix)
+            # self.rows.append(self.rows[-1].copy())
             self.matrix = m.matrix.tolist()
-            self.iteraciones.append(self.matrix)
-            self.rows.append(self.rows[-1].copy())
 
     def makeArtBasicDosFases(self):
             m = MatrixOperations(self.matrix)
@@ -305,26 +336,38 @@ class SimplexAlgorithm:
                 print("Problema infactible")
             if acotada:
                 print("Problema no acotado")
-            print(m.matrix)
-            self.iteraciones.append(m.matrix.tolist())
-            self.rows.append(self.rows[-1].copy())
+            # print(m.matrix)
+            # self.iteraciones.append(m.matrix.tolist())
+            # self.rows.append(self.rows[-1].copy())
             self.matrix = m.matrix.tolist()
 
     def granM(self):
         # Cuenta de columnas
         cols = int(self.nVariables)+1
         self.cols.append("BVS")
-        for i in range(0,cols - 1):
-            self.cols.append("X"+str(i+1))
+        auxLimits = []
+        indexLimits = 0
+        self.nVariables = int(self.nVariables)
+        for value in self.limits: 
+            if value['type'] == 'sin_limite':
+                auxLimits.append(1)
+                self.cols.append("X"+str(indexLimits+1)+"p")
+                self.cols.append("X"+str(indexLimits+1)+"pp")
+                self.nVariables += 1
+                cols += 1
+            else:
+                auxLimits.append(0)
+                self.cols.append("X"+str(indexLimits+1))
+            indexLimits += 1
         art = 0
         flagArt = False
         slack = 0
         for restriccion in self.restricciones:
             restriccion = self.invertir_signos_y_comparacion(restriccion)
-            if restriccion[int(self.nVariables)] == "<=":
+            if restriccion[len(restriccion)- 2] == "<=":
                 cols += 1
                 slack += 1
-            elif restriccion[int(self.nVariables)] == "=":
+            elif restriccion[len(restriccion)- 2] == "=":
                 cols += 1
                 flagArt = True
                 art += 1
@@ -343,8 +386,21 @@ class SimplexAlgorithm:
         if self.method == "Minimizar":
             auxFuncion *= -1
         # Creación de la fila de la función objetivo
-        for i in range(0, len(self.variables)):
-            row.append(int(self.variables[i]) * auxFuncion)
+        print(auxLimits)
+        print(self.variables)
+        index = 0
+        for i in range(len(auxLimits)):
+            if auxLimits[i] == 1:
+                value = self.variables[index]
+                if(index + 1 >= len(self.variables)):
+                    self.variables.append(value*-1)
+                else:
+                    self.variables.insert(index+1, value*-1)
+                index += 1
+            index += 1
+        for i in range(0, self.nVariables):
+            if(i < len(self.variables)):
+                row.append(int(self.variables[i]) * auxFuncion)
         for i in range(0, slack):
             row.append(0)
         for i in range(0, art):
@@ -360,22 +416,29 @@ class SimplexAlgorithm:
         self.artificial = art
         self.slack = slack
 
+        count = 0
+        for i in range(0, len(auxLimits)):
+            if auxLimits[i] == 1:
+                count += 1
+
         for i in range(slack):
-            self.cols.append("S" + str(i + 1 + int(self.nVariables)))
+            self.cols.append("S" + str(i + 1 + int(self.nVariables) - count))
         for i in range(art):
-            self.cols.append("A" + str(i + 1 + int(self.nVariables) + slack))
+            self.cols.append("A" + str(i + 1 + int(self.nVariables) -count + slack))
 
         self.cols.append("RHS")
 
+        
+        index = 0
         for r in self.restricciones:
             row = []
             # Escribimos las variables normales
-            for c in range(0, int(self.nVariables)):
+            for c in range(len(r) - 2):
                 row.append(int(r[c]))
-            
-                
+                if auxLimits[c] == 1:
+                    row.append(-1 * int(r[c]))  
             # Escribimos las variables de holgura o artificial
-            if r[int(self.nVariables)] == "<=":
+            if r[len(r)-2] == "<=":
                 for i in range(0, auxSlack):
                     row.append(0)
                 row.append(1)
@@ -385,7 +448,7 @@ class SimplexAlgorithm:
                 auxSlack += 1
                 for i in range(0, totalArt):
                     row.append(0)
-            elif r[int(self.nVariables)] == ">=":
+            elif r[len(r)-2] == ">=":
                 for i in range(0, auxSlack):
                     row.append(0)
                 row.append(-1)
@@ -410,10 +473,9 @@ class SimplexAlgorithm:
                     row.append(0)
                 art -= 1
                 auxArt += 1
-
-            row.append(int(r[int(self.nVariables) + 1]))
+            row.append(int(r[len(r)-1]))
             self.matrix.append(row)
-        #print(self.matrix)
+        print(self.matrix)
         auxList = []
         if self.method == "Minimizar":
             auxList.append("-Z")
