@@ -20,7 +20,7 @@ def variables(request, restricciones, variables, method):
     context = {
         'restricciones': restricciones,
         'variables': variables,
-        'method': method,
+        'method': method,       
         'range_restricciones': range(restricciones),
         'range_variables': range(variables)
     }
@@ -32,14 +32,10 @@ def simplex(request):
         method = request.POST.get('objective')
         variables_count = request.POST.get('variables')
         restricciones_count = request.POST.get('restricciones')
-
         if variables_count is None or restricciones_count is None:
             return HttpResponse("Faltan datos necesarios", status=400)
-
         variables = [float(request.POST.get(f'x{i}')) for i in range(int(variables_count))]
         restricciones = []
-        print(variables_count)
-        print(variables)
         for j in range(int(restricciones_count)):
             aux = []
             restriccion = [float(request.POST.get(f'r{j}x{k}')) for k in range(int(variables_count))]
@@ -50,29 +46,20 @@ def simplex(request):
             aux.append(operator)
             aux.append(value)
             restricciones.append(aux)
-        print(restricciones_count)
-        print(restricciones)
-        # Aquí puedes llamar a tu algoritmo de Simplex con los valores capturados
         simplex = SimplexAlgorithm(method, methodSimplex, variables, restricciones, variables_count, restricciones_count)
         iteraciones = simplex.createMatrix()
         cols = simplex.cols
         rows = simplex.rows
-        print("Cols:" + str(cols))
-        print("Rows: "+ str(rows))
         iteraciones_combinadas = []
         for i, iteracion in enumerate(iteraciones):
             iteraciones_combinadas.append(list(zip(rows[i], iteracion)))
-
-        print("Iteraciones Combinadas" + str(iteraciones_combinadas))
-
         auxResult = iteraciones_combinadas[-1]
         result = [(row, data_row[-1]) for row, data_row in auxResult]
-        print("Resultado: " + str(result))
-
-
-
-
-
-        return render(request, 'resultado.html', {'iteraciones': iteraciones_combinadas, 'cols': cols, 'result': result}) 
+        return render(request, 'resultado.html', {
+            'iteraciones': iteraciones_combinadas,
+            'cols': cols,
+            'result': result,
+            'total_iteraciones': len(iteraciones_combinadas)
+        })
     return HttpResponse("Método no permitido", status=405)
 

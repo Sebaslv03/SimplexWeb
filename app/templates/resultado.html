@@ -21,34 +21,50 @@
         h2, h1 {
             text-align: center;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <header>
+        <a href="{% url 'menu' %}">Volver al inicio</a>
+    </header>
+
     <div id="tables-container">
         <h1>Resultado Algoritmo Simplex</h1>
+        <h2 id="iteration-counter">Iteración 1 de {{ total_iteraciones }}</h2>
+
         {% for iteracion in iteraciones %}
-            <h2>Iteración {{ forloop.counter }}</h2>
-            <table border="1">
-                <thead>
-                    <tr>
-                        {% for col in cols %}
-                            <th>{{ col }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row, dataRow in iteracion %}
+            <div class="iteration-table {% if forloop.counter0 != 0 %}hidden{% endif %}" id="iteracion-{{ forloop.counter0 }}">
+                <table border="1">
+                    <thead>
                         <tr>
-                            <td>{{ row }}</td>
-                            {% for value in dataRow %}
-                                <td>{{ value }}</td>
+                            {% for col in cols %}
+                                <th>{{ col }}</th>
                             {% endfor %}
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for row, dataRow in iteracion %}
+                            <tr>
+                                <td>{{ row }}</td>
+                                {% for value in dataRow %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endfor %}
+
+        <div class="center">
+            <button onclick="changeIteration(-1)">Anterior</button>
+            <button onclick="changeIteration(1)">Siguiente</button>
+        </div>
     </div>
+
     <div id="tables-container">
         <h2>Valores Finales</h2>
         <table border="1">
@@ -68,5 +84,31 @@
             </tbody>
         </table>
     </div>
+
+    <script>
+        let currentIteration = 0;
+        const totalIterations = {{ total_iteraciones }};
+        
+        function changeIteration(direction) {
+            // Ocultar la iteración actual
+            document.getElementById(`iteracion-${currentIteration}`).classList.add('hidden');
+            
+            // Cambiar el índice de la iteración
+            currentIteration += direction;
+
+            // Asegurar que el índice esté dentro de los límites
+            if (currentIteration < 0) {
+                currentIteration = 0;
+            } else if (currentIteration >= totalIterations) {
+                currentIteration = totalIterations - 1;
+            }
+
+            // Mostrar la nueva iteración
+            document.getElementById(`iteracion-${currentIteration}`).classList.remove('hidden');
+
+            // Actualizar el contador de iteración
+            document.getElementById('iteration-counter').textContent = `Iteración ${currentIteration + 1} de ${totalIterations}`;
+        }
+    </script>
 </body>
 </html>
