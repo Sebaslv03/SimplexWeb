@@ -65,8 +65,12 @@
         </div>
     </div>
 
+    <div>
+        <h2>{{ text }}</h2>
+    </div>
+
     <div id="tables-container">
-        <h2>Valores Finales</h2>
+        <h2>Valores Finales Variables Basicas</h2>
         <table border="1">
             <thead>
                 <tr>
@@ -76,6 +80,26 @@
             </thead>
             <tbody>
                 {% for row, last_value in result %}
+                    <tr>
+                        <td>{{ row }}</td>
+                        <td>{{ last_value }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tables-container">
+        <h2>Valores Finales Variables</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row, last_value in notBasic %}
                     <tr>
                         <td>{{ row }}</td>
                         <td>{{ last_value }}</td>

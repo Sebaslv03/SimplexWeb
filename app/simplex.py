@@ -45,17 +45,17 @@ class SimplexAlgorithm:
         self.rows = []
         self.cols = []
         self.limits = limites
+        self.infactible = False
+        self.noAcotada = False
 
     def invertir_signos_y_comparacion(self, lista):
             # Identificar el último número y la comparación
             comparacion = lista[-2]  # penúltimo elemento es la comparación
             ultimo_numero = int(lista[-1])  # último elemento es el número
-            
             # Verificar si el último número es negativo
             if ultimo_numero < 0:
                 # Invertir signos de los números
                 lista_numeros = [str(-int(num)) for num in lista[:-2]]  # Convertir a entero, cambiar signo, luego de vuelta a string
-                
                 # Invertir la comparación
                 if comparacion == "<=":
                     comparacion = ">="
@@ -92,8 +92,8 @@ class SimplexAlgorithm:
         art = 0
         flagArt = False
         slack = 0
-        for restriccion in self.restricciones: #cambiar por variable "restricciones"
-            restriccion = self.invertir_signos_y_comparacion(restriccion)
+        for i in range(len(self.restricciones)): #cambiar por variable "restricciones"
+            restriccion = self.invertir_signos_y_comparacion(self.restricciones[i])
             if restriccion[len(restriccion)- 2] == "<=":
                 cols += 1
                 slack += 1
@@ -106,11 +106,11 @@ class SimplexAlgorithm:
                 cols += 2
                 slack += 1
                 flagArt = True
+            self.restricciones[i] = restriccion
         rows = int(self.nRestricciones)+1
         aux = art
         self.artificial = art #crear variable artificial
         self.slack = slack #crear variable slack
-        
         # Creación de fila w en caso de que exista
         if flagArt:
             rows += 1
@@ -127,10 +127,12 @@ class SimplexAlgorithm:
         row = []
         auxFuncion = -1
         
+        print(self.method)
         # En caso de minimizar
-        if self.method == "Minimizar": #cambiar por variable "metodo"
+        if self.method == "minimizar": #cambiar por variable "metodo"
             auxFuncion *= -1
         
+        print(auxFuncion)
         # Creación de la fila de la función objetivo
         index = 0
         for i in range(len(auxLimits)):
@@ -228,7 +230,7 @@ class SimplexAlgorithm:
                         print("indice: "+str(i))
                         auxList.append(self.cols[i+1])
         self.rows.append(auxList)
-        print(self.rows)
+        print(self.matrix)
         self.makeArtBasicDosFases()
         #Hacer iteracion de simplex
 
@@ -275,14 +277,11 @@ class SimplexAlgorithm:
                     if basic:
                         break
             if not any(m.matrix.tolist()[0][i].subs('M', 1000) < 0 for i in range(cols - 1) if i not in aIndex) and basic:
-                print("Problema infactible")
+                self.infactible = True
             if acotada:
-                print("Solucion no acotada")
+                self.noAcotada = True
            
-            print(m.matrix)
-            # Dibujar solucion
-            # self.iteraciones.append(self.matrix)
-            # self.rows.append(self.rows[-1].copy())
+
             self.matrix = m.matrix.tolist()
 
     def makeArtBasicDosFases(self):
@@ -290,13 +289,18 @@ class SimplexAlgorithm:
             art = self.artificial
             cols = len(self.matrix[0])
             self.iteraciones.append(self.matrix)
+            
             for i in range(0, art):
                 row = 1
+                print("aqui")
+                print(art)
                 for r in range(1, len(self.matrix)):
+                    print(self.matrix[r][cols - art - 1])
                     if(self.matrix[r][cols - art - 1] == 1):
                         art -= 1
                         break
                     row += 1
+                print(row)
                 m.add_multiple_of_row(row, 0, -1)
             row = 0
             z = 0
@@ -308,9 +312,15 @@ class SimplexAlgorithm:
                 aIndex.append(cols - a - 2)
             acotada = False
             basic = False
+            jump = 1
+            if art > 0:
+                jump = 2
             while any(m.matrix.tolist()[row][i] < 0 for i in range(cols - 1) if i not in aIndex):
                 entry = self.entry(m.matrix.tolist(), cols, row)
-                out = self.ratio(entry, m.matrix.tolist(), 2, 2)
+                out = self.ratio(entry, m.matrix.tolist(), jump, jump)
+                
+                print("entry: " + str(entry))
+                print("out: " + str(out))
                 if (out == -1):
                     acotada = True
                     break
@@ -333,12 +343,9 @@ class SimplexAlgorithm:
                 z += 1
                 
             if not any(m.matrix.tolist()[row][i] < 0 for i in range(cols - 1) if i not in aIndex) and basic:
-                print("Problema infactible")
+                self.infactible = True
             if acotada:
-                print("Problema no acotado")
-            # print(m.matrix)
-            # self.iteraciones.append(m.matrix.tolist())
-            # self.rows.append(self.rows[-1].copy())
+                self.noAcotada = True
             self.matrix = m.matrix.tolist()
 
     def granM(self):
@@ -383,7 +390,7 @@ class SimplexAlgorithm:
         auxFuncion = -1
         M = sp.symbols('M')
         # En caso de minimizar
-        if self.method == "Minimizar":
+        if self.method == "minimizar":
             auxFuncion *= -1
         # Creación de la fila de la función objetivo
         print(auxLimits)
@@ -514,6 +521,7 @@ class SimplexAlgorithm:
 
     def ratio(self, entry_index, matrix, jump, r):
         rhs = [row[-1] for row in matrix[jump:]]  # Extract RHS values from the last column, skipping the first row
+        print(rhs)
         pivot_column = [row[entry_index] for row in matrix[jump:]]  # Extract pivot column values, skipping the first row
         ratios = []
         for i in range(len(rhs)):
@@ -526,9 +534,11 @@ class SimplexAlgorithm:
                         ratios.append((ratio, i + r))  # Adjust index to match the original matrix
             else:
                 ratios.append((float('inf'), i + r))  # Avoid division by zero and adjust index
+        print(ratios)
         # Find the row index with the minimum ratio
         if len(ratios) == 0:
             return -1
+        
         todas_con_inf = all(tupla[0] == float('inf') for tupla in ratios)
         if todas_con_inf:
             return -1

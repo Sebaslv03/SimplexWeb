@@ -67,11 +67,28 @@ def simplex(request):
             iteraciones_combinadas.append(list(zip(rows[i], iteracion)))
         auxResult = iteraciones_combinadas[-1]
         result = [(row, data_row[-1]) for row, data_row in auxResult]
+        notBasic = []
+
+        for col in cols[1:-1]:
+            flag = False
+            for row, _ in result:
+                if col == row:
+                    flag = True
+            if not flag:
+                notBasic.append((col, 0))
+        text = ""
+        if simplex.noAcotada:
+            text = "Solucion no acotada"
+        if simplex.infactible:
+            text = "Solucion infactible"
+
         return render(request, 'resultado.html', {
             'iteraciones': iteraciones_combinadas,
             'cols': cols,
             'result': result,
-            'total_iteraciones': len(iteraciones_combinadas)
+            'notBasic': notBasic,
+            'total_iteraciones': len(iteraciones_combinadas),
+            'text': text
         })
     return HttpResponse("Método no permitido", status=405)
 
