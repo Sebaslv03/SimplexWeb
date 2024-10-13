@@ -132,7 +132,6 @@ class SimplexAlgorithm:
         if self.method == "minimizar": #cambiar por variable "metodo"
             auxFuncion *= -1
         
-        print(auxFuncion)
         # Creación de la fila de la función objetivo
         index = 0
         for i in range(len(auxLimits)):
@@ -228,6 +227,7 @@ class SimplexAlgorithm:
                 for r in range(1, len(self.matrix)):
                     if self.matrix[r][i] == 1:
                         print("indice: "+str(i))
+                        print("columna: " + self.cols[i+1])
                         auxList.append(self.cols[i+1])
         self.rows.append(auxList)
         print(self.matrix)
@@ -258,7 +258,7 @@ class SimplexAlgorithm:
                 aIndex.append(cols - a - 2)
             basic = False
             while any(m.matrix.tolist()[0][i].subs('M', 1000) < 0 for i in range(cols - 1)):
-                entry = self.entry(m.matrix.tolist(), cols, 0)
+                entry = self.entry(m.matrix.tolist(), cols - self.artificial, 0)
                 out = self.ratio(entry, m.matrix.tolist(), 1, 1)
                 if (out == -1):
                     acotada = True
@@ -316,7 +316,7 @@ class SimplexAlgorithm:
             if art > 0:
                 jump = 2
             while any(m.matrix.tolist()[row][i] < 0 for i in range(cols - 1) if i not in aIndex):
-                entry = self.entry(m.matrix.tolist(), cols, row)
+                entry = self.entry(m.matrix.tolist(), cols - self.artificial, row)
                 out = self.ratio(entry, m.matrix.tolist(), jump, jump)
                 
                 print("entry: " + str(entry))
