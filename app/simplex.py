@@ -438,6 +438,17 @@ class SimplexAlgorithm:
         
         index = 0
         for r in self.restricciones:
+            if r[len(r) - 1] < 0:
+                for i in range(len(r)):
+                    if type(r[i]) != float:
+                        if r[i] == "<=":
+                            r[i] = ">="
+                        elif r[i] == ">=":
+                            r[i] = "<="
+                    else:
+                        r[i] = r[i] * -1
+
+        for r in self.restricciones:
             row = []
             # Escribimos las variables normales
             for c in range(len(r) - 2):
